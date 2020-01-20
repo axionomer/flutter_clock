@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 import 'package:vector_math/vector_math.dart';
 import 'package:flutter/material.dart' as material;
 import 'package:flutter/widgets.dart';
@@ -12,25 +13,26 @@ Future<DrawableRoot> loadSvgDrawableRoot(String file) async{
   return svg.fromSvgString(rawSvg, rawSvg);
 }
 
-class Vehicles extends StatefulWidget {
-  final int numberOfVehicles;
+class Boids extends StatefulWidget {
+  final int numberOfBoids;
   final Offset target;
   final String svgFile;
-  Vehicles(this.numberOfVehicles, this.target, this.svgFile);
+  final Color color;
+  Boids(this.numberOfBoids, this.target, this.svgFile, {this.color});
 
   @override
-  _VehiclesState createState() => _VehiclesState();
+  _BoidsState createState() => _BoidsState();
 }
 
-class _VehiclesState extends State<Vehicles> {
+class _BoidsState extends State<Boids> {
   final Random random = Random();
-  final List<Vehicle> vehicles = [];
+  final List<Boid> boids = [];
   DrawableRoot _drawable;
 
   @override
   void initState() {
-    List.generate(widget.numberOfVehicles, (index) {
-      vehicles.add(Vehicle(0,0,random));
+    List.generate(widget.numberOfBoids, (index) {
+      boids.add(Boid(0,0,random));
     });
     loadSvgDrawableRoot(widget.svgFile).then((drawable) => setState(() {
       _drawable = drawable;
@@ -42,30 +44,25 @@ class _VehiclesState extends State<Vehicles> {
   Widget build(BuildContext context) {
     return Rendering(
       startTime: Duration(seconds: 30),
-      onTick: _simulateVehicles,
+      onTick: _simulateBoids,
       builder: (context, time) {
         return CustomPaint(
-          painter: VehiclePainter(vehicles, time, _drawable),
+          painter: VehiclePainter(boids, time, _drawable, widget.color),
         );
       },
     );
   }
 
-  _simulateVehicles(Duration time) {
+  _simulateBoids(Duration time) {
     Vector2 bounds = Vector2(material.MediaQuery.of(context).size.width, material.MediaQuery.of(context).size.height);
-    vehicles.forEach((vehicle){
-        //vehicle.seek(Vector2(widget.target.dx, widget.target.dy));
-        vehicle.boundaries(bounds);
-        //vehicle.wander(random);
-        //vehicle.borders(bounds);
-        vehicle.update();
+    boids.forEach((boid){
+        boid.run(boids, bounds);
       }
     );
   }
 }
 
-class Vehicle
-{
+class Boid {
   Vector2 position;
   Vector2 velocity;
   Vector2 acceleration;
@@ -79,13 +76,13 @@ class Vehicle
 
   Random random;
 
-  Vehicle(double x, double y, Random rand) {
+  Boid(double x, double y, Random rand) {
     acceleration = Vector2(0,0);
-    velocity = Vector2(rand.nextDouble() * 3 + 2, -rand.nextDouble() * 3 + 2);
-    position = Vector2(rand.nextDouble() * 100, rand.nextDouble() * 100);
+    velocity = Vector2(rand.nextDouble() * 2 - 1, -rand.nextDouble() * 2 -1);
+    position = Vector2(x, y);
     r = 10.0;
-    maxSpeed = 2;
-    maxForce = 0.05;
+    maxSpeed = 1.0;
+    maxForce = 0.005;
     d = -300;
     random = rand;
   }
@@ -100,6 +97,12 @@ class Vehicle
 
   double angle(Vector2 v) {
     return atan2(v.y, v.x);
+  }
+
+  void run(List<Boid> boids, Vector2 bounds) {
+    flock(boids);
+    update();
+    borders(bounds);
   }
 
   void update() {
@@ -164,8 +167,7 @@ class Vehicle
     //if (debug) drawWanderStuff(position,circlePos,target,wanderR);
   }
 
-  void seek(Vector2 target)
-  {
+  Vector2 seek(Vector2 target) {
     Vector2 desired = target;
     desired.sub(position);
     desired.normalize();
@@ -173,39 +175,130 @@ class Vehicle
 
     Vector2 steer = desired - velocity;
     limit(steer, maxForce);
-    applyForce(steer);
+    return steer;
+  }
+
+  // We accumulate a new acceleration each time based on three rules
+  void flock(List<Boid> boids) {
+    Vector2 sep = separate(boids);   // Separation
+    Vector2 ali = align(boids);      // Alignment
+    Vector2 coh = cohesion(boids);   // Cohesion
+    // Arbitrarily weight these forces
+    sep.multiply(Vector2(1.5,1.5));
+    ali.multiply(Vector2(1.0,1.0));
+    coh.multiply(Vector2(1.0,1.0));
+    // Add the force vectors to acceleration
+    applyForce(sep);
+    applyForce(ali);
+    applyForce(coh);
   }
 
   void applyForce(Vector2 force)
   {
     acceleration.add(force);
   }
+
+  // Separation
+  // Method checks for nearby boids and steers away
+  Vector2 separate (List<Boid> boids) {
+    double desiredSeparation = 25.0;
+    Vector2 steer = Vector2(0,0);
+    double count = 0;
+    // For every boid in the system, check if it's too close
+    boids.forEach((other) {
+      double d = position.distanceTo(other.position);
+      // If the distance is greater than 0 and less than an arbitrary amount (0 when you are yourself)
+      if ((d > 0) && (d < desiredSeparation)) {
+        // Calculate vector pointing away from neighbor
+        Vector2 diff = position - other.position;
+        diff.normalize();
+        diff /= d; // Weight by distance
+        steer.add(diff);
+        count++; // Keep track of how many
+      }
+    });
+    // Average -- divide by how many
+    if (count > 0) {
+      steer /= count;
+    }
+
+    // As long as the vector is greater than 0
+    if (steer.length > 0) {
+      // Implement Reynolds: Steering = Desired - Velocity
+      steer.normalize();
+      steer *= maxSpeed;
+      steer.sub(velocity);
+      limit(steer, maxForce);
+    }
+    return steer;
+  }
+
+  // Alignment
+  // For every nearby boid in the system, calculate the average velocity
+  Vector2 align (List<Boid> boids) {
+    double neighborDist = 50;
+    Vector2 sum = Vector2(0,0);
+    double count = 0;
+    boids.forEach((other) {
+      double d = position.distanceTo(other.position);
+      if ((d > 0) && (d < neighborDist)) {
+        sum.add(other.velocity);
+        count++;
+      }
+    });
+    if (count > 0) {
+      sum /= count;
+      sum.normalize();
+      sum *= maxSpeed;
+      Vector2 steer = sum - velocity;
+      limit(steer, maxForce);
+      return steer;
+    } else {
+      return new Vector2(0,0);
+    }
+  }
+
+  // Cohesion
+  // For the average position (i.e. center) of all nearby boids, calculate steering vector towards that position
+  Vector2 cohesion (List<Boid> boids) {
+    double neighborDist = 40;
+    Vector2 sum = new Vector2(0,0);   // Start with empty vector to accumulate all positions
+    double count = 0;
+    boids.forEach((other) {
+      double d = position.distanceTo(other.position);
+      if ((d > 0) && (d < neighborDist)) {
+        sum.add(other.position); // Add position
+        count++;
+      }
+    });
+    if (count > 0) {
+      sum /= count;
+      return seek(sum);  // Steer towards the position
+    } else {
+      return new Vector2(0,0);
+    }
+  }
 }
 
 class VehiclePainter extends CustomPainter {
-  List<Vehicle> vehicles;
+  List<Boid> vehicles;
   Duration time;
   DrawableRoot svg;
+  Color color;
 
-  VehiclePainter(this.vehicles, this.time, this.svg);
+  VehiclePainter(this.vehicles, this.time, this.svg, this.color);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color=(material.Colors.black);
-    //final DrawableRoot drawableSvg = parameters.svg;
     if(svg != null) {
       vehicles.forEach((vehicle) {
         double theta = atan2(vehicle.velocity.y, vehicle.velocity.x) + pi / 2;
         canvas.save();
         canvas.translate(vehicle.position.x, vehicle.position.y);
         canvas.rotate(theta);
-        //      Path path = Path();
-        //      path.lineTo(-vehicle.r, vehicle.r*5);
-        //      path.lineTo(vehicle.r, vehicle.r*5);
-        //      canvas.drawPath(path, paint);
-        canvas.scale(20);
+        canvas.scale(5);
         svg.draw(canvas,
-            ColorFilter.mode(material.Colors.black38, material.BlendMode.src),
+            ColorFilter.mode(color, material.BlendMode.src),
             Rect.fromLTWH(0, 0, size.width, size.height));
         canvas.restore();
       });

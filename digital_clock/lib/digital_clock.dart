@@ -21,24 +21,6 @@ import 'package:tinycolor/tinycolor.dart';
 
 import 'particles.dart';
 
-enum _Element {
-  background,
-  text,
-  shadow,
-}
-
-final _lightTheme = {
-  _Element.background: Colors.grey, //Colors.amber, //Color(0xFF007991),
-  _Element.text: Colors.grey, //Color(0xFF007991),
-  _Element.shadow: Color(0x99000000) //Color(0x99222E50),
-};
-
-final _darkTheme = {
-  _Element.background: Color(0xFF222E50), //Colors.black,
-  _Element.text: Color(0xFF222E50), //Colors.white,
-  _Element.shadow: Colors.white //Color(0xFF222E50),
-};
-
 class DigitalClock extends StatefulWidget {
   const DigitalClock(this.model);
 
@@ -54,8 +36,7 @@ class _DigitalClockState extends State<DigitalClock> {
   DrawableRoot _particleSvgDrawable;
   Color _particleColor = Colors.white;
   Color _backgroundColor = Colors.white;
-  ParticleParameters _particleParameters = ParticleParameters(1);
-  Particles _particles = Particles(ParticleParameters(10));
+  ParticleParameters _particleParameters = ParticleParameters(25);
   Offset _tapPosition = Offset.zero;
   String _weatherSvgFile;
 
@@ -98,8 +79,8 @@ class _DigitalClockState extends State<DigitalClock> {
           _backgroundColor = Colors.green;
           _particleColor = Colors.blue;
           _particleParameters = ParticleParameters(
-              10,
-              size: .4,
+              50,
+              size: 10,
               duration: Duration(milliseconds: 5000),
               paint: Paint()..color=_particleColor.withOpacity(.5),
               svg: drawable
@@ -114,7 +95,7 @@ class _DigitalClockState extends State<DigitalClock> {
           _particleColor = Colors.grey[100];
           _particleParameters = ParticleParameters(
               10,
-              size: .9,
+              size: 50,
               duration: Duration(milliseconds: 5000),
               paint: Paint()..color=_particleColor.withOpacity(.5),
               svg: drawable
@@ -123,13 +104,13 @@ class _DigitalClockState extends State<DigitalClock> {
       }
       break;
       case WeatherCondition.cloudy: {
-        _weatherSvgFile = 'assets/cloud.svg';
+        _weatherSvgFile = 'assets/cloud3.svg';
         loadSvgDrawableRoot(_weatherSvgFile).then((drawable) => setState(() {
           _backgroundColor = Colors.blue;
           _particleColor = Colors.grey[100];
           _particleParameters = ParticleParameters(
-              10,
-              size: .5,
+              25,
+              size: 30,
               paint: Paint()..color=_particleColor.withOpacity(.5),
               svg: drawable
           );
@@ -142,8 +123,36 @@ class _DigitalClockState extends State<DigitalClock> {
           _backgroundColor = Colors.red;
           _particleColor = Colors.grey;
           _particleParameters = ParticleParameters(
+              20,
+              size: 30,
+              paint: Paint()..color=_particleColor.withOpacity(.5),
+              svg: drawable
+          );
+        }));
+      }
+      break;
+      case WeatherCondition.snowy: {
+        _weatherSvgFile = 'assets/sun.svg';
+        loadSvgDrawableRoot(_weatherSvgFile).then((drawable) => setState(() {
+          _backgroundColor = Colors.indigo;
+          _particleColor = Colors.white;
+          _particleParameters = ParticleParameters(
               10,
-              size: .5,
+              size: 30,
+              paint: Paint()..color=_particleColor.withOpacity(.5),
+              svg: drawable
+          );
+        }));
+      }
+      break;
+      case WeatherCondition.windy: {
+        _weatherSvgFile = 'assets/sun.svg';
+        loadSvgDrawableRoot(_weatherSvgFile).then((drawable) => setState(() {
+          _backgroundColor = Colors.teal;
+          _particleColor = Colors.grey;
+          _particleParameters = ParticleParameters(
+              10,
+              size: 30,
               paint: Paint()..color=_particleColor.withOpacity(.5),
               svg: drawable
           );
@@ -157,7 +166,7 @@ class _DigitalClockState extends State<DigitalClock> {
           _particleColor = Colors.amber;
           _particleParameters = ParticleParameters(
               10,
-              size: 2.0,
+              size: 30,
               paint: Paint()..color=_particleColor.withOpacity(.5),
               svg: drawable
           );
@@ -215,14 +224,10 @@ class _DigitalClockState extends State<DigitalClock> {
 
   Widget buildClock(BuildContext context)
   {
-    final colors = Theme.of(context).brightness == Brightness.light
-        ? _lightTheme
-        : _darkTheme;
-
     bool darkMode = Theme.of(context).brightness != Brightness.light;
 
-    Color backgroundColor = darkMode ? Colors.grey[850] : Colors.grey[300]; //_backgroundColor;
-    Color accentColor = Colors.white; //Colors.grey;
+    Color backgroundColor = darkMode ? Colors.grey[850] : Colors.grey[300];
+    Color accentColor = darkMode ? Colors.grey[500] : Colors.black54;
     Color accentColor2 = _particleColor; //Colors.grey[300];
     Color textColor = _backgroundColor; //darkMode ? Colors.grey[300] : Colors.grey[850];
 
@@ -243,8 +248,8 @@ class _DigitalClockState extends State<DigitalClock> {
     double hr = _dateTime.hour.toDouble();
     double min = _dateTime.minute.toDouble();
     double sec = _dateTime.second.toDouble();
-    String hrStr = hour; //'09';
-    String minStr = minute; //'36';
+    String hrStr = hour;
+    String minStr = minute;
 
     double hourAngle = scale(hr, 0, 12, 0, 2 * pi);
     double minuteAngle = scale(min, 0, 60, 0, 2 * pi);
@@ -266,7 +271,6 @@ class _DigitalClockState extends State<DigitalClock> {
     return Stack(
       children: [
         Positioned.fill(child: Container(color: backgroundColor)),
-//        DemoBody(screenSize: Size(screenWidth, screenHeight)),
         Container(
           alignment: FractionalOffset(.25,.25), //Alignment(-.5, -.4),
           child: Container(
@@ -276,6 +280,9 @@ class _DigitalClockState extends State<DigitalClock> {
                 color: backgroundColor,
                 shape: BoxShape.circle,
                 //borderRadius: BorderRadius.all(Radius.circular(50)),
+                border: Border.all(
+                    color: textColor
+                ),
                 boxShadow: softBoxShadows
             ),
             child: Stack(
@@ -306,7 +313,6 @@ class _DigitalClockState extends State<DigitalClock> {
                           begin: Alignment(cos(hourAngle - pi/2), sin(hourAngle - pi/2)),
                           end: Alignment(cos(hourAngle + pi/2), sin(hourAngle + pi/2)),
                           colors:[TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color]
-//                          colors:[Colors.white, Colors.black]
                       ),
                     )
                   ),
@@ -324,7 +330,13 @@ class _DigitalClockState extends State<DigitalClock> {
                   color: backgroundColor,
                   shape: BoxShape.circle,
                   //borderRadius: BorderRadius.all(Radius.circular(50)),
-                  boxShadow: softBoxShadows
+                  boxShadow: softBoxShadows,
+                  gradient:
+                  LinearGradient(
+                    begin: Alignment(cos(minuteAngle - pi/2), sin(minuteAngle - pi/2)),
+                    end: Alignment(cos(minuteAngle + pi/2), sin(minuteAngle + pi/2)),
+                    colors:[TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color]
+                  ),
               ),
               child: Stack(
                 children:[
@@ -348,25 +360,25 @@ class _DigitalClockState extends State<DigitalClock> {
                       decoration: BoxDecoration(
                           color: _particleColor,
                           shape: BoxShape.circle,
-                          boxShadow: softBoxShadows
+                          boxShadow: softBoxShadows,
                       ),
                     ),
                   ),
                   Center(
-                      child: GradientText(
+                      child: Text(
                         minStr,
                         style: TextStyle(
-                          color: textColor, //colors[_Element.text],
+                          color: backgroundColor, //colors[_Element.text],
                           fontFamily: 'clock2',
                           fontSize: fontSize * .7,
                           letterSpacing: 10,
                         ),
-                        gradient:
-                        LinearGradient(
-                          begin: Alignment(cos(minuteAngle - pi/2), sin(minuteAngle - pi/2)),
-                          end: Alignment(cos(minuteAngle + pi/2), sin(minuteAngle + pi/2)),
-                          colors:[TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color]
-                        ),
+//                        gradient:
+//                        LinearGradient(
+//                          begin: Alignment(cos(minuteAngle - pi/2), sin(minuteAngle - pi/2)),
+//                          end: Alignment(cos(minuteAngle + pi/2), sin(minuteAngle + pi/2)),
+//                          colors:[TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color]
+//                        ),
                       )
                   ),
                 ]
@@ -413,13 +425,14 @@ class _DigitalClockState extends State<DigitalClock> {
                   boxShadow: softBoxShadows
               ),
               child: Center(
-                  child: GradientText(
+                  child: Text(
                     widget.model.location,
                     style: weatherTextStyle,
-                    gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight, colors:[TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color]
-                    ),
+//                    color: textColor,
+//                    gradient: LinearGradient(
+//                        begin: Alignment.topLeft,
+//                        end: Alignment.bottomRight, colors:[TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color]
+//                    ),
                   )
               ),
               //child: Center(child: Text(widget.model.temperatureString, textAlign: TextAlign.center, style: weatherTextStyle))
@@ -484,10 +497,10 @@ class _DigitalClockState extends State<DigitalClock> {
 //            )
 //        ),
         Positioned.fill(
-            child: Particles(_particleParameters)
+            child: Particles(50, _particleParameters)
         ),
         Positioned.fill(
-            child: Vehicles(10,_tapPosition, 'assets/bird1.svg')
+            child: Boids(50,_tapPosition, 'assets/a.svg', color: accentColor,)
         ),
       ],
     );
@@ -503,7 +516,7 @@ class _DigitalClockState extends State<DigitalClock> {
 //            child: Particles(_particleParameters)
 //        ),
         Positioned.fill(
-          child: Vehicles(5,_tapPosition, 'assets/bird1.svg')
+          child: Boids(5,_tapPosition, 'assets/sun.svg')
         ),
         Positioned.fill(
           child: GestureDetector(
@@ -519,47 +532,3 @@ class _DigitalClockState extends State<DigitalClock> {
     return ClipRect(child: buildClock(context));
   }
 }
-
-//class GradientText extends StatelessWidget {
-//  GradientText(
-//      this.text, {
-//        @required this.gradient, @required this.rect, this.style
-//      });
-//
-//  final String text;
-//  final Gradient gradient;
-//  final TextStyle style;
-//  final Rect rect;
-//
-//  @override
-//  Widget build(BuildContext context) {
-//    return ShaderMask(
-//      shaderCallback: (bounds) => gradient.createShader(
-////          Offset.zero & bounds.size
-//        rect,
-//      ),
-//      child: Text(
-//        text,
-//        style: style
-//      ),
-//    );
-//  }
-//}
-
-//Color lighten(Color color, [double amount = .1]) {
-//  assert(amount >= 0 && amount <= 1);
-//
-//  final hsl = HSLColor.fromColor(color);
-//  final hslLight = hsl.withLightness((hsl.lightness + amount).clamp(0.0, 1.0));
-//
-//  return hslLight.toColor();
-//}
-//
-//Color darken(Color color, [double amount = .1]) {
-//  assert(amount >= 0 && amount <= 1);
-//
-//  final hsl = HSLColor.fromColor(color);
-//  final hslDark = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
-//
-//  return hslDark.toColor();
-//}

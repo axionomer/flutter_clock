@@ -23,9 +23,9 @@ Future<ui.Image> loadImage(String file) async{
 }
 
 class Particles extends StatefulWidget {
-  //final int numberOfParticles;
+  final int maxNumberOfParticles;
   final ParticleParameters parameters;
-  Particles([this.parameters]);
+  Particles(this.maxNumberOfParticles, [this.parameters]);
 
   @override
   _ParticlesState createState() => _ParticlesState();
@@ -40,7 +40,7 @@ class _ParticlesState extends State<Particles> {
 
   @override
   void initState() {
-    List.generate(widget.parameters.count, (index) {
+    List.generate(widget.maxNumberOfParticles, (index) {
       particles.add(ParticleModel(random, widget.parameters));
     });
     loadImage('assets/cloud2.png').then((image) => setState(() {
@@ -63,7 +63,9 @@ class _ParticlesState extends State<Particles> {
   }
 
   _simulateParticles(Duration time) {
-    particles.forEach((particle) => particle.maintainRestart(time));
+    for(int i = 0; i < particles.length && i < widget.parameters.count; ++i) {
+      particles[i].maintainRestart(time);
+    }
   }
 }
 
@@ -89,7 +91,7 @@ class ParticleParameters
 
 class ParticleModel {
   Animatable tween;
-  //double size;
+  double scale;
   AnimationProgress animationProgress;
   Random random;
 
@@ -109,7 +111,7 @@ class ParticleModel {
     final startPosition = flip ? Offset(startX, startY) : Offset(endX, endY);
     final endPosition = flip ? Offset(endX, endY) : Offset(startX, startY);
 
-    Duration duration = Duration(milliseconds: 20000 + random.nextInt(10000));
+    Duration duration = Duration(milliseconds: 40000 + random.nextInt(10000));
 
     tween = MultiTrackTween([
       Track("x").add(
@@ -120,7 +122,7 @@ class ParticleModel {
           curve: Curves.linear),
     ]);
     animationProgress = AnimationProgress(duration: duration, startTime: time);
-    //size = 2; //+ random.nextDouble() * 0.4;
+    scale =  random.nextDouble() + .5;
   }
 
   maintainRestart(Duration time) {
@@ -140,9 +142,10 @@ class ParticlePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     if(parameters.svg != null) {
-      particles.forEach((particle) {
-        var progress = particle.animationProgress.progress(time);
-        final animation = particle.tween.transform(progress);
+      for(int i = 0; i < particles.length && i < parameters.count; ++i) {
+        particles[i].maintainRestart(time);
+        var progress = particles[i].animationProgress.progress(time);
+        final animation = particles[i].tween.transform(progress);
         final position = Offset(
             animation["x"] * size.width, animation["y"] * size.height);
 
@@ -153,14 +156,14 @@ class ParticlePainter extends CustomPainter {
 
         canvas.save();
         canvas.translate(position.dx, position.dy);
-        canvas.scale(10);
+        canvas.scale(parameters.size * particles[i].scale);
         //canvas.drawImage(image, Offset.zero, paint1);
 //        canvas.drawImageRect(image, Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()), Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),  paint1);
         parameters.svg.draw(
             canvas, ColorFilter.mode(parameters.paint.color, BlendMode.src),
             Rect.fromLTWH(0, 0, size.width, size.height));
         canvas.restore();
-      });
+      }
     }
   }
 
