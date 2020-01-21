@@ -5,6 +5,7 @@ Gradients on hour and minutes are angled to reflect current position on an analo
 
 light - sunny
 <img src='light-sun.gif' width='350'>
+
 dark - sunny
 <img src='dark-sun.gif' width='350'>
 
@@ -12,7 +13,7 @@ snow
 <img src='dark-snow.gif' width='350'>
 
 rain
-<img src='white-rain.gif' width='350'>
+<img src='light-rain.gif' width='350'>
 
 wind
 <img src='dark-wind.gif' width='350'>
