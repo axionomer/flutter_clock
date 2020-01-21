@@ -1,51 +1,37 @@
 import 'dart:math';
-
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:simple_animations/simple_animations.dart';
-
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/rendering.dart';
-import 'dart:async';
-import 'package:flutter/services.dart' show rootBundle;
-import 'dart:typed_data';
-
-Future<ui.Image> loadImage(String file) async{
-  final ByteData data = await rootBundle.load(file);
-//  return svg.fromSvgString(rawSvg, rawSvg);
-
-  Completer<ui.Image> completer = Completer();
-  ui.decodeImageFromList(Uint8List.view(data.buffer), (ui.Image image) {
-    completer.complete(image);
-  });
-  return completer.future;
-}
 
 class Particles extends StatefulWidget {
   final int maxNumberOfParticles;
-  final ParticleParameters parameters;
-  Particles(this.maxNumberOfParticles, [this.parameters]);
+  final _ParticlesState ps = _ParticlesState();
+  Particles(this.maxNumberOfParticles);
+
+  void updateParameters(ParticleParameters parameters) {
+    ps.updateParameters(parameters);
+  }
 
   @override
-  _ParticlesState createState() => _ParticlesState();
+  _ParticlesState createState() => ps;
 }
 
 class _ParticlesState extends State<Particles> {
   final Random random = Random();
-
   final List<ParticleModel> particles = [];
+  ParticleParameters _parameters = ParticleParameters(0);
 
-  ui.Image _image;
+  void updateParameters(ParticleParameters parameters) {
+    setState(() { _parameters = parameters; });
+  }
 
   @override
   void initState() {
     List.generate(widget.maxNumberOfParticles, (index) {
-      particles.add(ParticleModel(random, widget.parameters));
+      particles.add(ParticleModel(random, _parameters));
     });
-    loadImage('assets/cloud2.png').then((image) => setState(() {
-      _image = image;
-    }));
     super.initState();
   }
 
@@ -56,37 +42,49 @@ class _ParticlesState extends State<Particles> {
       onTick: _simulateParticles,
       builder: (context, time) {
         return CustomPaint(
-          painter: ParticlePainter(particles, time, widget.parameters, _image),
+          painter: ParticlePainter(particles, time, _parameters),
         );
       },
     );
   }
 
   _simulateParticles(Duration time) {
-    for(int i = 0; i < particles.length && i < widget.parameters.count; ++i) {
+    for(int i = 0; i < particles.length && i < _parameters.count; ++i) {
       particles[i].maintainRestart(time);
     }
   }
 }
 
-class ParticleParameters
-{
-  int count = 0;
-  double size = 1;
-  //Offset startPosition; Offset(0.5, 0);
-  //Offset endPosition = Offset(0.5, 1);
-  //Curve xCurve = Curves.linear;
-  //Curve yCurve = Curves.linear;
-  Duration duration = Duration(seconds: 0);
-  Paint paint;
+class ParticleParameters {
+  int count;
+  double scale;
+  Offset scaleRandomness;
+  Offset startPosition;
+  Offset startPositionRandomness;
+  Offset endPosition;
+  Offset endPositionRandomness;
+  bool directionRandomness;
+  Curve xCurve;
+  Curve yCurve;
+  int durationMs;
+  int durationRandomness;
+  Color color;
   DrawableRoot svg;
-  Color color = Colors.cyan;
 
-  ParticleParameters(this.count, {double size, Duration duration, Paint paint, DrawableRoot svg}) :
-    size = size,
-    duration = duration,
-    paint = paint,
-    svg = svg;
+  ParticleParameters(this.count, {
+    this.scale = 15,
+    this.scaleRandomness = const Offset(1,1.5),
+    this.startPosition = const Offset(-.2,1.2),
+    this.startPositionRandomness = const Offset(1.4,1),
+    this.endPosition = const Offset(-.2,-.2),
+    this.endPositionRandomness = const Offset(1.4,-1),
+    this.directionRandomness = true,
+    this.xCurve = Curves.linear,
+    this.yCurve = Curves.linear,
+    this.durationMs = 40000,
+    this.durationRandomness = 10000,
+    this.color = Colors.black,
+    this.svg});
 }
 
 class ParticleModel {
@@ -102,27 +100,27 @@ class ParticleModel {
   }
 
   restart({Duration time = Duration.zero}) {
-    bool flip = random.nextBool();
 
-    double startX = -0.2 + 1.4 * random.nextDouble();
-    double startY = 1.2 + random.nextDouble();
-    double endX = -0.2 + 1.4 * random.nextDouble();
-    double endY = -0.2 - random.nextDouble();
+    bool flip = parameters.directionRandomness ? random.nextBool() : false;
+    double startX = parameters.startPosition.dx + parameters.startPositionRandomness.dx * random.nextDouble();
+    double startY = parameters.startPosition.dy + parameters.startPositionRandomness.dy * random.nextDouble();
+    double endX = parameters.endPosition.dx + parameters.endPositionRandomness.dx * random.nextDouble();
+    double endY = parameters.endPosition.dy + parameters.endPositionRandomness.dy * random.nextDouble();
     final startPosition = flip ? Offset(startX, startY) : Offset(endX, endY);
     final endPosition = flip ? Offset(endX, endY) : Offset(startX, startY);
 
-    Duration duration = Duration(milliseconds: 40000 + random.nextInt(10000));
+    Duration duration = Duration(milliseconds: parameters.durationMs + random.nextInt(parameters.durationRandomness));
 
     tween = MultiTrackTween([
       Track("x").add(
           duration, Tween(begin: startPosition.dx, end: endPosition.dx),
-          curve: Curves.linear),
+          curve: parameters.xCurve),
       Track("y").add(
           duration, Tween(begin: startPosition.dy, end: endPosition.dy),
-          curve: Curves.linear),
+          curve: parameters.yCurve),
     ]);
     animationProgress = AnimationProgress(duration: duration, startTime: time);
-    scale =  random.nextDouble() + .5;
+    scale = parameters.scale * (parameters.scaleRandomness.dx + parameters.scaleRandomness.dy * random.nextDouble());
   }
 
   maintainRestart(Duration time) {
@@ -136,8 +134,7 @@ class ParticlePainter extends CustomPainter {
   List<ParticleModel> particles;
   Duration time;
   ParticleParameters parameters;
-  ui.Image image;
-  ParticlePainter(this.particles, this.time, this.parameters, this.image);
+  ParticlePainter(this.particles, this.time, this.parameters);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -148,19 +145,11 @@ class ParticlePainter extends CustomPainter {
         final animation = particles[i].tween.transform(progress);
         final position = Offset(
             animation["x"] * size.width, animation["y"] * size.height);
-
-        Paint paint1 = Paint();
-        //paint1.maskFilter = MaskFilter.blur(BlurStyle.normal, 10);
-        paint1.blendMode = BlendMode.colorBurn;
-        //paint1.color = Colors.black26;
-
         canvas.save();
         canvas.translate(position.dx, position.dy);
-        canvas.scale(parameters.size * particles[i].scale);
-        //canvas.drawImage(image, Offset.zero, paint1);
-//        canvas.drawImageRect(image, Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()), Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),  paint1);
+        canvas.scale(particles[i].scale);
         parameters.svg.draw(
-            canvas, ColorFilter.mode(parameters.paint.color, BlendMode.src),
+            canvas, ColorFilter.mode(parameters.color, BlendMode.src),
             Rect.fromLTWH(0, 0, size.width, size.height));
         canvas.restore();
       }

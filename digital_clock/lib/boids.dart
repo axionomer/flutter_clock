@@ -1,3 +1,5 @@
+//adapted from nature of code by Daniel Shiffman
+
 import 'dart:math';
 import 'dart:ui';
 import 'package:vector_math/vector_math.dart';
@@ -7,11 +9,6 @@ import 'package:flutter/rendering.dart';
 import 'package:simple_animations/simple_animations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart' show rootBundle;
-
-Future<DrawableRoot> loadSvgDrawableRoot(String file) async{
-  final String rawSvg = await rootBundle.loadString(file);
-  return svg.fromSvgString(rawSvg, rawSvg);
-}
 
 class Boids extends StatefulWidget {
   final int numberOfBoids;
@@ -29,21 +26,26 @@ class _BoidsState extends State<Boids> {
   final List<Boid> boids = [];
   DrawableRoot _drawable;
 
+  Future<DrawableRoot> loadSvgDrawableRoot(String file) async{
+    final String rawSvg = await rootBundle.loadString(file);
+    return svg.fromSvgString(rawSvg, rawSvg);
+  }
+
   @override
   void initState() {
-    List.generate(widget.numberOfBoids, (index) {
-      boids.add(Boid(0,0,random));
-    });
     loadSvgDrawableRoot(widget.svgFile).then((drawable) => setState(() {
       _drawable = drawable;
     }));
+    List.generate(widget.numberOfBoids, (index) {
+      boids.add(Boid(0,0,random));
+    });
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Rendering(
-      startTime: Duration(seconds: 30),
+      startTime: Duration(seconds: 60),
       onTick: _simulateBoids,
       builder: (context, time) {
         return CustomPaint(
@@ -73,7 +75,6 @@ class Boid {
   double d;
 
   double wanderTheta = 0;
-
   Random random;
 
   Boid(double x, double y, Random rand) {
@@ -261,7 +262,7 @@ class Boid {
   // Cohesion
   // For the average position (i.e. center) of all nearby boids, calculate steering vector towards that position
   Vector2 cohesion (List<Boid> boids) {
-    double neighborDist = 40;
+    double neighborDist = 30;
     Vector2 sum = new Vector2(0,0);   // Start with empty vector to accumulate all positions
     double count = 0;
     boids.forEach((other) {

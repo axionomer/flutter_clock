@@ -15,11 +15,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'particles.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gradient_text/gradient_text.dart';
 import 'package:tinycolor/tinycolor.dart';
 
-import 'particles.dart';
 
 class DigitalClock extends StatefulWidget {
   const DigitalClock(this.model);
@@ -33,12 +31,12 @@ class DigitalClock extends StatefulWidget {
 class _DigitalClockState extends State<DigitalClock> {
   DateTime _dateTime = DateTime.now();
   Timer _timer;
-  DrawableRoot _particleSvgDrawable;
   Color _particleColor = Colors.white;
-  Color _backgroundColor = Colors.white;
-  ParticleParameters _particleParameters = ParticleParameters(25);
+  Color _weatherColor = Colors.white;
   Offset _tapPosition = Offset.zero;
-  String _weatherSvgFile;
+  String _weatherParticleSvgFile;
+  ParticleParameters _weatherParticleParameters;
+  Particles _weatherParticles = Particles(50);
 
   Future<DrawableRoot> loadSvgDrawableRoot(String file) async{
     final String rawSvg = await rootBundle.loadString(file);
@@ -74,102 +72,108 @@ class _DigitalClockState extends State<DigitalClock> {
   {
     switch(widget.model.weatherCondition){
       case WeatherCondition.rainy: {
-        _weatherSvgFile = 'assets/raindrop.svg';
-        loadSvgDrawableRoot(_weatherSvgFile).then((drawable) => setState(() {
-          _backgroundColor = Colors.green;
+        _weatherParticleSvgFile = 'assets/raindrop.svg';
+        loadSvgDrawableRoot(_weatherParticleSvgFile).then((drawable) => setState(() {
+          _weatherColor = Colors.green;
           _particleColor = Colors.blue;
-          _particleParameters = ParticleParameters(
+          _weatherParticleParameters = ParticleParameters(
               50,
-              size: 10,
-              duration: Duration(milliseconds: 5000),
-              paint: Paint()..color=_particleColor.withOpacity(.5),
+              scale: 20,
+              color: _particleColor.withOpacity(.5),
               svg: drawable
           );
+          _weatherParticles.updateParameters(_weatherParticleParameters);
         }));
       }
       break;
       case WeatherCondition.foggy: {
-        _weatherSvgFile = 'assets/sun.svg';
-        loadSvgDrawableRoot(_weatherSvgFile).then((drawable) => setState(() {
-          _backgroundColor = Colors.deepPurple;
+        _weatherParticleSvgFile = 'assets/sun.svg';
+        loadSvgDrawableRoot(_weatherParticleSvgFile).then((drawable) => setState(() {
+          _weatherColor = Colors.deepPurple;
           _particleColor = Colors.grey[100];
-          _particleParameters = ParticleParameters(
+          _weatherParticleParameters = ParticleParameters(
               10,
-              size: 50,
-              duration: Duration(milliseconds: 5000),
-              paint: Paint()..color=_particleColor.withOpacity(.5),
+              scale: 50,
+              color: _particleColor.withOpacity(.5),
               svg: drawable
           );
+          _weatherParticles.updateParameters(_weatherParticleParameters);
         }));
       }
       break;
       case WeatherCondition.cloudy: {
-        _weatherSvgFile = 'assets/cloud3.svg';
-        loadSvgDrawableRoot(_weatherSvgFile).then((drawable) => setState(() {
-          _backgroundColor = Colors.blue;
+        _weatherParticleSvgFile = 'assets/cloud3.svg';
+        loadSvgDrawableRoot(_weatherParticleSvgFile).then((drawable) => setState(() {
+          _weatherColor = Colors.blue;
           _particleColor = Colors.grey[100];
-          _particleParameters = ParticleParameters(
+          _weatherParticleParameters = ParticleParameters(
               25,
-              size: 30,
-              paint: Paint()..color=_particleColor.withOpacity(.5),
+              scale: 30,
+              color: _particleColor.withOpacity(.5),
               svg: drawable
           );
+          _weatherParticles.updateParameters(_weatherParticleParameters);
         }));
       }
       break;
       case WeatherCondition.thunderstorm: {
-        _weatherSvgFile = 'assets/cloud.svg';
-        loadSvgDrawableRoot(_weatherSvgFile).then((drawable) => setState(() {
-          _backgroundColor = Colors.red;
+        _weatherParticleSvgFile = 'assets/cloud.svg';
+        loadSvgDrawableRoot(_weatherParticleSvgFile).then((drawable) => setState(() {
+          _weatherColor = Colors.red;
           _particleColor = Colors.grey;
-          _particleParameters = ParticleParameters(
+          _weatherParticleParameters = ParticleParameters(
               20,
-              size: 30,
-              paint: Paint()..color=_particleColor.withOpacity(.5),
+              scale: 30,
+              color: _particleColor.withOpacity(.5),
               svg: drawable
           );
+          _weatherParticles.updateParameters(_weatherParticleParameters);
         }));
       }
       break;
       case WeatherCondition.snowy: {
-        _weatherSvgFile = 'assets/sun.svg';
-        loadSvgDrawableRoot(_weatherSvgFile).then((drawable) => setState(() {
-          _backgroundColor = Colors.indigo;
+        _weatherParticleSvgFile = 'assets/snowflake.svg';
+        loadSvgDrawableRoot(_weatherParticleSvgFile).then((drawable) => setState(() {
+          _weatherColor = Colors.cyan;
           _particleColor = Colors.white;
-          _particleParameters = ParticleParameters(
+          _weatherParticleParameters = ParticleParameters(
               10,
-              size: 30,
-              paint: Paint()..color=_particleColor.withOpacity(.5),
+              scale: 30,
+              color: _particleColor.withOpacity(.5),
               svg: drawable
           );
+          _weatherParticles.updateParameters(_weatherParticleParameters);
         }));
       }
       break;
       case WeatherCondition.windy: {
-        _weatherSvgFile = 'assets/sun.svg';
-        loadSvgDrawableRoot(_weatherSvgFile).then((drawable) => setState(() {
-          _backgroundColor = Colors.teal;
-          _particleColor = Colors.grey;
-          _particleParameters = ParticleParameters(
+        _weatherParticleSvgFile = 'assets/wind.svg';
+        loadSvgDrawableRoot(_weatherParticleSvgFile).then((drawable) => setState(() {
+          _weatherColor = Color(0xFF196E2B);
+          _particleColor = Colors.white;
+          _weatherParticleParameters = ParticleParameters(
               10,
-              size: 30,
-              paint: Paint()..color=_particleColor.withOpacity(.5),
-              svg: drawable
+              scale: 30,
+              scaleRandomness: Offset(1,1),
+              color: _particleColor.withOpacity(.5),
+              svg: drawable,
           );
+          _weatherParticles.updateParameters(_weatherParticleParameters);
         }));
       }
       break;
       default: {
-        _weatherSvgFile = 'assets/sun.svg';
-        loadSvgDrawableRoot(_weatherSvgFile).then((drawable) => setState(() {
-          _backgroundColor = Colors.blue;
+        _weatherParticleSvgFile = 'assets/sun.svg';
+        loadSvgDrawableRoot(_weatherParticleSvgFile).then((drawable) => setState(() {
+          _weatherColor = Colors.blue;
           _particleColor = Colors.amber;
-          _particleParameters = ParticleParameters(
+          _weatherParticleParameters = ParticleParameters(
               10,
-              size: 30,
-              paint: Paint()..color=_particleColor.withOpacity(.5),
+              scale: 45,
+              color: _particleColor.withOpacity(.5),
               svg: drawable
           );
+          _weatherParticles.updateParameters(_weatherParticleParameters);
         }));
       }
     }
@@ -185,14 +189,6 @@ class _DigitalClockState extends State<DigitalClock> {
   void _updateTime() {
     setState(() {
       _dateTime = DateTime.now();
-      // Update once per minute. If you want to update every second, use the
-      // following code.
-//      _timer = Timer(
-//        Duration(minutes: 1) -
-//            Duration(seconds: _dateTime.second) -
-//            Duration(milliseconds: _dateTime.millisecond),
-//        _updateTime,
-//      );
       // Update once per second, but make sure to do it at the beginning of each
       // new second, so that the clock is accurate.
        _timer = Timer(
@@ -206,30 +202,12 @@ class _DigitalClockState extends State<DigitalClock> {
     return (((x - x0) / (x1 - x0)) * (y1 - y0)) + y0;
   }
 
-  double degrees2Radians(double degrees) {
-    return degrees * (pi / 180.0);
-  }
-
-  double radians2Degrees(double radians) {
-    return radians * (180 / pi);
-  }
-
-  void _handleTapDown(TapDownDetails details) {
-    final RenderBox referenceBox = context.findRenderObject();
-    print("hello");
-    setState(() {
-      _tapPosition = referenceBox.globalToLocal(details.globalPosition);
-    });
-  }
-
   Widget buildClock(BuildContext context)
   {
     bool darkMode = Theme.of(context).brightness != Brightness.light;
-
     Color backgroundColor = darkMode ? Colors.grey[850] : Colors.grey[300];
-    Color accentColor = darkMode ? Colors.grey[500] : Colors.black54;
-    Color accentColor2 = _particleColor; //Colors.grey[300];
-    Color textColor = _backgroundColor; //darkMode ? Colors.grey[300] : Colors.grey[850];
+    Color accentColor = darkMode ? Colors.grey[500] : Colors.white;
+    Color textColor = _weatherColor;
 
     Orientation orientation = MediaQuery.of(context).orientation;
     double screenHeight = orientation == Orientation.portrait ? MediaQuery.of(context).size.width * 3/5 : MediaQuery.of(context).size.height;
@@ -243,13 +221,12 @@ class _DigitalClockState extends State<DigitalClock> {
       color: textColor,
       fontFamily: "roboto-mono",
       fontSize: fontSize * .25,
+      fontWeight: FontWeight.bold
     );
 
     double hr = _dateTime.hour.toDouble();
     double min = _dateTime.minute.toDouble();
     double sec = _dateTime.second.toDouble();
-    String hrStr = hour;
-    String minStr = minute;
 
     double hourAngle = scale(hr, 0, 12, 0, 2 * pi);
     double minuteAngle = scale(min, 0, 60, 0, 2 * pi);
@@ -257,86 +234,97 @@ class _DigitalClockState extends State<DigitalClock> {
 
     List<BoxShadow> softBoxShadows = [
       BoxShadow(
-          color: darkMode ? Colors.black54 : Colors.grey[500],
-          offset: Offset(4.0, 4.0),
-          blurRadius: 15.0,
-          spreadRadius: 1.0),
+        color: darkMode ? Colors.black54 : Colors.grey[500],
+        offset: Offset(4.0, 4.0),
+        blurRadius: 15.0,
+        spreadRadius: 1.0
+      ),
       BoxShadow(
-          color: darkMode ? Colors.grey[800] : Colors.white,
-          offset: Offset(-4.0, -4.0),
-          blurRadius: 15.0,
-          spreadRadius: 1.0),
+        color: darkMode ? Colors.grey[800] : Colors.white,
+        offset: Offset(-4.0, -4.0),
+        blurRadius: 15.0,
+        spreadRadius: 1.0
+      ),
     ];
+
+    List<Color> darkModeColors = [TinyColor(textColor).lighten(30).saturate(50).color, TinyColor(textColor).darken(10).saturate(50).color];
+    List<Color> lightModeColors = [TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color];
+    List<Color> gradientColors = darkMode ? darkModeColors : lightModeColors;
 
     return Stack(
       children: [
-        Positioned.fill(child: Container(color: backgroundColor)),
+        Positioned.fill(
+          child: Container(
+            color: backgroundColor
+          )
+        ),
+        Positioned.fill(
+          child: _weatherParticles,
+        ),
         Container(
-          alignment: FractionalOffset(.25,.25), //Alignment(-.5, -.4),
+          alignment: FractionalOffset(.25,.25),
           child: Container(
             width: screenHeight * .6,
             height: screenHeight * .6,
             decoration: BoxDecoration(
-                color: backgroundColor,
-                shape: BoxShape.circle,
-                //borderRadius: BorderRadius.all(Radius.circular(50)),
-                border: Border.all(
-                    color: textColor
-                ),
-                boxShadow: softBoxShadows
+              color: backgroundColor,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: textColor
+              ),
+              boxShadow: softBoxShadows
             ),
             child: Stack(
-                children:[
-                  Align(
-                    alignment: Alignment(cos(hourAngle - pi/2), sin(hourAngle - pi/2)),
-                    child: Container(
-                      width: screenHeight * .05,
-                      height: screenHeight * .05,
-                      decoration: BoxDecoration(
-                        color: _particleColor,
-                        shape: BoxShape.circle,
-                        boxShadow: softBoxShadows
-                      ),
+              children:[
+                Align(
+                  alignment: Alignment(cos(hourAngle - pi/2), sin(hourAngle - pi/2)),
+                  child: Container(
+                    width: screenHeight * .05,
+                    height: screenHeight * .05,
+                    decoration: BoxDecoration(
+                      color: _particleColor,
+                      shape: BoxShape.circle,
+                      boxShadow: softBoxShadows
                     ),
                   ),
-                  Center(
-                    child: GradientText(
-                      hrStr + '',
-                      style: TextStyle(
-                        color: textColor, //colors[_Element.text],
-                        fontFamily: 'clock2',
-                        fontSize: fontSize,
-                        letterSpacing: 10,
-                      ),
-                      gradient:
-                      LinearGradient(
-                          begin: Alignment(cos(hourAngle - pi/2), sin(hourAngle - pi/2)),
-                          end: Alignment(cos(hourAngle + pi/2), sin(hourAngle + pi/2)),
-                          colors:[TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color]
-                      ),
-                    )
-                  ),
-                ]
+                ),
+                Center(
+                  child: GradientText(
+                    hour,
+                    style: TextStyle(
+                      color: textColor,
+                      fontFamily: 'clock2',
+                      fontSize: fontSize,
+                      letterSpacing: 10,
+                    ),
+                    gradient:
+                    LinearGradient(
+                      begin: Alignment(cos(hourAngle - pi/2), sin(hourAngle - pi/2)),
+                      end: Alignment(cos(hourAngle + pi/2), sin(hourAngle + pi/2)),
+                      colors: gradientColors,
+                    ),
+                  )
+                ),
+              ]
             ),
           ),
         ),
         Container(
-          alignment: FractionalOffset(.75,.25), //Alignment(.5, -.5),
+          alignment: FractionalOffset(.75,.25),
           child: Container(
             child: Container (
               width: screenWidth * .25,
               height: screenWidth  * .25,
               decoration: BoxDecoration(
-                  color: backgroundColor,
-                  shape: BoxShape.circle,
-                  //borderRadius: BorderRadius.all(Radius.circular(50)),
-                  boxShadow: softBoxShadows,
-                  gradient:
-                  LinearGradient(
-                    begin: Alignment(cos(minuteAngle - pi/2), sin(minuteAngle - pi/2)),
-                    end: Alignment(cos(minuteAngle + pi/2), sin(minuteAngle + pi/2)),
-                    colors:[TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color]
-                  ),
+                color: backgroundColor,
+                shape: BoxShape.circle,
+                boxShadow: softBoxShadows,
+                gradient:
+                LinearGradient(
+                  begin: Alignment(cos(minuteAngle - pi/2), sin(minuteAngle - pi/2)),
+                  end: Alignment(cos(minuteAngle + pi/2), sin(minuteAngle + pi/2)),
+                  colors: gradientColors,
+                ),
               ),
               child: Stack(
                 children:[
@@ -346,9 +334,9 @@ class _DigitalClockState extends State<DigitalClock> {
                       width: screenHeight * .03,
                       height: screenHeight * .03,
                       decoration: BoxDecoration(
-                          color: _particleColor,
-                          shape: BoxShape.circle,
-                          boxShadow: softBoxShadows
+                        color: _particleColor,
+                        shape: BoxShape.circle,
+                        boxShadow: softBoxShadows
                       ),
                     ),
                   ),
@@ -358,28 +346,22 @@ class _DigitalClockState extends State<DigitalClock> {
                       width: screenHeight * .03,
                       height: screenHeight * .03,
                       decoration: BoxDecoration(
-                          color: _particleColor,
-                          shape: BoxShape.circle,
-                          boxShadow: softBoxShadows,
+                        color: _particleColor,
+                        shape: BoxShape.circle,
+                        boxShadow: softBoxShadows,
                       ),
                     ),
                   ),
                   Center(
-                      child: Text(
-                        minStr,
-                        style: TextStyle(
-                          color: backgroundColor, //colors[_Element.text],
-                          fontFamily: 'clock2',
-                          fontSize: fontSize * .7,
-                          letterSpacing: 10,
-                        ),
-//                        gradient:
-//                        LinearGradient(
-//                          begin: Alignment(cos(minuteAngle - pi/2), sin(minuteAngle - pi/2)),
-//                          end: Alignment(cos(minuteAngle + pi/2), sin(minuteAngle + pi/2)),
-//                          colors:[TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color]
-//                        ),
-                      )
+                    child: Text(
+                      minute,
+                      style: TextStyle(
+                        color: backgroundColor,
+                        fontFamily: 'clock2',
+                        fontSize: fontSize * .7,
+                        letterSpacing: 10,
+                      ),
+                    )
                   ),
                 ]
               ),
@@ -387,13 +369,12 @@ class _DigitalClockState extends State<DigitalClock> {
           ),
         ),
         Container(
-            alignment: FractionalOffset(.61,.78), //Alignment(0.2, 0.7),
+            alignment: FractionalOffset(.61,.78),
             child: Container(
               width: screenWidth * .2,
               height: screenHeight * .2,
               decoration: BoxDecoration(
                   color: backgroundColor,
-                  //shape: BoxShape.circle,
                   borderRadius: BorderRadius.all(Radius.circular(50)),
                   boxShadow: softBoxShadows
               ),
@@ -403,127 +384,38 @@ class _DigitalClockState extends State<DigitalClock> {
                     style: weatherTextStyle,
                     gradient: LinearGradient(
                         begin: Alignment.topLeft,
-                        end: Alignment.bottomRight, colors:[TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color]
+                        end: Alignment.bottomRight,
+                        colors: gradientColors,
                     ),
                   )
               ),
-              //child: Center(child: Text(widget.model.temperatureString, textAlign: TextAlign.center, style: weatherTextStyle))
             )
         ),
         Container(
-            alignment: FractionalOffset(0.5, 1),
-            child: Container(
-              height: screenHeight * .1,
-              width: screenWidth *.75,
-              decoration: BoxDecoration(
-                  color: backgroundColor,
-                  //shape: BoxShape.circle,
-                  borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(screenHeight * 1),
-                      topRight: Radius.circular(screenHeight * 1)
-                  ),
-                  boxShadow: softBoxShadows
+          alignment: FractionalOffset(0.5, 1),
+          child: Container(
+            height: screenHeight * .1,
+            width: screenWidth *.75,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(screenHeight * 1),
+                topRight: Radius.circular(screenHeight * 1)
               ),
-              child: Center(
-                  child: Text(
-                    widget.model.location,
-                    style: weatherTextStyle,
-//                    color: textColor,
-//                    gradient: LinearGradient(
-//                        begin: Alignment.topLeft,
-//                        end: Alignment.bottomRight, colors:[TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color]
-//                    ),
-                  )
-              ),
-              //child: Center(child: Text(widget.model.temperatureString, textAlign: TextAlign.center, style: weatherTextStyle))
-            )
-        ),
-//        Container(
-//            alignment: FractionalOffset(0, 0),
-//            child: Container(
-//              height: screenWidth *.15 /2,
-//              width: screenWidth *.2,
-//              decoration: BoxDecoration(
-//                  color: backgroundColor,
-//                  //shape: BoxShape.circle,
-//                  borderRadius: BorderRadius.only(
-//                      //topLeft: Radius.circular(screenHeight * 1),
-//                      bottomRight: Radius.circular(screenWidth * .15 * .5)
-//                  ),
-//                  boxShadow: softBoxShadows
-//              ),
-//              child: Container(
-//                  alignment: FractionalOffset(.2,.1),
-//                  child: GradientText(
-//                    'L: '+ widget.model.lowString + '\n' + 'H: '+ widget.model.highString,
-//                    style: TextStyle(fontSize: 20),
-//                    textAlign: TextAlign.left,
-//                    gradient: LinearGradient(
-//                        begin: Alignment.topLeft,
-//                        end: Alignment.bottomRight, colors:[TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color]
-//                    ),
-//                  )
-//              ),
-//              //child: Center(child: Text(widget.model.temperatureString, textAlign: TextAlign.center, style: weatherTextStyle))
-//            )
-//        ),
-//        Container(
-//            alignment: FractionalOffset(1, 0),
-//            child: Container(
-//              height: screenWidth *.15 /2,
-//              width: screenWidth *.15,
-//              decoration: BoxDecoration(
-//                  color: backgroundColor,
-//                  //shape: BoxShape.circle,
-//                  borderRadius: BorderRadius.only(
-//                    //topLeft: Radius.circular(screenHeight * 1),
-//                      bottomLeft: Radius.circular(screenWidth * .15 * .5)
-//                  ),
-//                  boxShadow: softBoxShadows
-//              ),
-//              child: Container(
-//                  alignment: FractionalOffset(.9,.4),
-//                  child: GradientText(
-//                    widget.model.weatherString,
-//                    style: TextStyle(fontSize: 20),
-//                    textAlign: TextAlign.right,
-//                    gradient: LinearGradient(
-//                        begin: Alignment.topLeft,
-//                        end: Alignment.bottomRight, colors:[TinyColor(textColor).lighten(20).saturate(50).color, TinyColor(textColor).darken(20).saturate(50).color]
-//                    ),
-//                  )
-//              ),
-//              //child: Center(child: Text(widget.model.temperatureString, textAlign: TextAlign.center, style: weatherTextStyle))
-//            )
-//        ),
-        Positioned.fill(
-            child: Particles(50, _particleParameters)
-        ),
-        Positioned.fill(
-            child: Boids(50,_tapPosition, 'assets/a.svg', color: accentColor,)
-        ),
-      ],
-    );
-  }
-
-  Widget buildVehicleTest(BuildContext context)
-  {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Positioned.fill(child: Container(color: Colors.amber)),
-//        Positioned.fill(
-//            child: Particles(_particleParameters)
-//        ),
-        Positioned.fill(
-          child: Boids(5,_tapPosition, 'assets/sun.svg')
-        ),
-        Positioned.fill(
-          child: GestureDetector(
-            onTapDown: _handleTapDown,
+              boxShadow: softBoxShadows
+            ),
+            child: Center(
+              child: Text(
+                widget.model.location,
+                style: weatherTextStyle,
+              )
+            ),
           )
         ),
-      ]
+        Positioned.fill(
+          child: Boids(40,_tapPosition, 'assets/bird2.svg', color: accentColor,)
+        ),
+      ],
     );
   }
 
