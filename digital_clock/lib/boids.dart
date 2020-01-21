@@ -26,7 +26,7 @@ class _BoidsState extends State<Boids> {
   final List<Boid> boids = [];
   DrawableRoot _drawable;
 
-  Future<DrawableRoot> loadSvgDrawableRoot(String file) async{
+  Future<DrawableRoot> loadSvgDrawableRoot(String file) async {
     final String rawSvg = await rootBundle.loadString(file);
     return svg.fromSvgString(rawSvg, rawSvg);
   }
@@ -34,10 +34,10 @@ class _BoidsState extends State<Boids> {
   @override
   void initState() {
     loadSvgDrawableRoot(widget.svgFile).then((drawable) => setState(() {
-      _drawable = drawable;
-    }));
+          _drawable = drawable;
+        }));
     List.generate(widget.numberOfBoids, (index) {
-      boids.add(Boid(0,0,random));
+      boids.add(Boid(0, 0, random));
     });
     super.initState();
   }
@@ -56,11 +56,11 @@ class _BoidsState extends State<Boids> {
   }
 
   _simulateBoids(Duration time) {
-    Vector2 bounds = Vector2(material.MediaQuery.of(context).size.width, material.MediaQuery.of(context).size.height);
-    boids.forEach((boid){
-        boid.run(boids, bounds);
-      }
-    );
+    Vector2 bounds = Vector2(material.MediaQuery.of(context).size.width,
+        material.MediaQuery.of(context).size.height);
+    boids.forEach((boid) {
+      boid.run(boids, bounds);
+    });
   }
 }
 
@@ -78,8 +78,8 @@ class Boid {
   Random random;
 
   Boid(double x, double y, Random rand) {
-    acceleration = Vector2(0,0);
-    velocity = Vector2(rand.nextDouble() * 2 - 1, -rand.nextDouble() * 2 -1);
+    acceleration = Vector2(0, 0);
+    velocity = Vector2(rand.nextDouble() * 2 - 1, -rand.nextDouble() * 2 - 1);
     position = Vector2(x, y);
     r = 10.0;
     maxSpeed = 1.0;
@@ -89,9 +89,9 @@ class Boid {
   }
 
   Vector2 limit(Vector2 v, double max) {
-    if((v.x*v.x)+(v.y*v.y) > (max*max)){
+    if ((v.x * v.x) + (v.y * v.y) > (max * max)) {
       v.normalize();
-      v.multiply(Vector2(max,max));
+      v.multiply(Vector2(max, max));
     }
     return v;
   }
@@ -118,15 +118,13 @@ class Boid {
 
     if (position.x < d) {
       desired = new Vector2(maxSpeed, velocity.y);
-    }
-    else if (position.x > bounds.x - d) {
+    } else if (position.x > bounds.x - d) {
       desired = new Vector2(-maxSpeed, velocity.y);
     }
 
     if (position.y < d) {
       desired = new Vector2(velocity.x, maxSpeed);
-    }
-    else if (position.y > bounds.y - d) {
+    } else if (position.y > bounds.y - d) {
       desired = new Vector2(velocity.x, -maxSpeed);
     }
 
@@ -141,27 +139,30 @@ class Boid {
   }
 
   void borders(Vector2 bounds) {
-    if (position.x < -r) position.x = bounds.x+r;
-    if (position.y < -r) position.y = bounds.y+r;
-    if (position.x > bounds.x+r) position.x = -r;
-    if (position.y > bounds.y+r) position.y = -r;
+    if (position.x < -r) position.x = bounds.x + r;
+    if (position.y < -r) position.y = bounds.y + r;
+    if (position.x > bounds.x + r) position.x = -r;
+    if (position.y > bounds.y + r) position.y = -r;
   }
 
   void wander(Random random) {
-    double wanderR = 25;         // Radius for our "wander circle"
-    double wanderD = 80;         // Distance for our "wander circle"
+    double wanderR = 25; // Radius for our "wander circle"
+    double wanderD = 80; // Distance for our "wander circle"
     double change = 0.3;
-    wanderTheta += (random.nextDouble() * change * 2) - change;     // Randomly change wander theta
+    wanderTheta += (random.nextDouble() * change * 2) -
+        change; // Randomly change wander theta
     // Now we have to calculate the new position to steer towards on the wander circle
-    Vector2 circlePos = velocity;    // Start with velocity
-    circlePos.normalize();            // Normalize to get heading
-    circlePos.multiply(Vector2(wanderD,wanderD));          // Multiply by distance
-    circlePos.add(position);               // Make it relative to boid's position
+    Vector2 circlePos = velocity; // Start with velocity
+    circlePos.normalize(); // Normalize to get heading
+    circlePos.multiply(Vector2(wanderD, wanderD)); // Multiply by distance
+    circlePos.add(position); // Make it relative to boid's position
 
-    double h = angle(velocity);        // We need to know the heading to offset wandertheta
+    double h =
+        angle(velocity); // We need to know the heading to offset wandertheta
 
-    Vector2 circleOffSet = Vector2(wanderR*cos(wanderTheta+h),wanderR*sin(wanderTheta+h));
-    Vector2 target = circlePos +circleOffSet;
+    Vector2 circleOffSet =
+        Vector2(wanderR * cos(wanderTheta + h), wanderR * sin(wanderTheta + h));
+    Vector2 target = circlePos + circleOffSet;
     seek(target);
 
     // Render wandering circle, etc.
@@ -181,29 +182,28 @@ class Boid {
 
   // We accumulate a new acceleration each time based on three rules
   void flock(List<Boid> boids) {
-    Vector2 sep = separate(boids);   // Separation
-    Vector2 ali = align(boids);      // Alignment
-    Vector2 coh = cohesion(boids);   // Cohesion
+    Vector2 sep = separate(boids); // Separation
+    Vector2 ali = align(boids); // Alignment
+    Vector2 coh = cohesion(boids); // Cohesion
     // Arbitrarily weight these forces
-    sep.multiply(Vector2(1.5,1.5));
-    ali.multiply(Vector2(1.0,1.0));
-    coh.multiply(Vector2(1.0,1.0));
+    sep.multiply(Vector2(1.5, 1.5));
+    ali.multiply(Vector2(1.0, 1.0));
+    coh.multiply(Vector2(1.0, 1.0));
     // Add the force vectors to acceleration
     applyForce(sep);
     applyForce(ali);
     applyForce(coh);
   }
 
-  void applyForce(Vector2 force)
-  {
+  void applyForce(Vector2 force) {
     acceleration.add(force);
   }
 
   // Separation
   // Method checks for nearby boids and steers away
-  Vector2 separate (List<Boid> boids) {
+  Vector2 separate(List<Boid> boids) {
     double desiredSeparation = 25.0;
-    Vector2 steer = Vector2(0,0);
+    Vector2 steer = Vector2(0, 0);
     double count = 0;
     // For every boid in the system, check if it's too close
     boids.forEach((other) {
@@ -236,9 +236,9 @@ class Boid {
 
   // Alignment
   // For every nearby boid in the system, calculate the average velocity
-  Vector2 align (List<Boid> boids) {
+  Vector2 align(List<Boid> boids) {
     double neighborDist = 50;
-    Vector2 sum = Vector2(0,0);
+    Vector2 sum = Vector2(0, 0);
     double count = 0;
     boids.forEach((other) {
       double d = position.distanceTo(other.position);
@@ -255,15 +255,16 @@ class Boid {
       limit(steer, maxForce);
       return steer;
     } else {
-      return new Vector2(0,0);
+      return new Vector2(0, 0);
     }
   }
 
   // Cohesion
   // For the average position (i.e. center) of all nearby boids, calculate steering vector towards that position
-  Vector2 cohesion (List<Boid> boids) {
+  Vector2 cohesion(List<Boid> boids) {
     double neighborDist = 30;
-    Vector2 sum = new Vector2(0,0);   // Start with empty vector to accumulate all positions
+    Vector2 sum = new Vector2(
+        0, 0); // Start with empty vector to accumulate all positions
     double count = 0;
     boids.forEach((other) {
       double d = position.distanceTo(other.position);
@@ -274,9 +275,9 @@ class Boid {
     });
     if (count > 0) {
       sum /= count;
-      return seek(sum);  // Steer towards the position
+      return seek(sum); // Steer towards the position
     } else {
-      return new Vector2(0,0);
+      return new Vector2(0, 0);
     }
   }
 }
@@ -291,15 +292,14 @@ class VehiclePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if(svg != null) {
+    if (svg != null) {
       vehicles.forEach((vehicle) {
         double theta = atan2(vehicle.velocity.y, vehicle.velocity.x) + pi / 2;
         canvas.save();
         canvas.translate(vehicle.position.x, vehicle.position.y);
         canvas.rotate(theta);
         canvas.scale(5);
-        svg.draw(canvas,
-            ColorFilter.mode(color, material.BlendMode.src),
+        svg.draw(canvas, ColorFilter.mode(color, material.BlendMode.src),
             Rect.fromLTWH(0, 0, size.width, size.height));
         canvas.restore();
       });

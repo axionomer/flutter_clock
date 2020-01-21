@@ -24,7 +24,9 @@ class _ParticlesState extends State<Particles> {
   ParticleParameters _parameters = ParticleParameters(0);
 
   void updateParameters(ParticleParameters parameters) {
-    setState(() { _parameters = parameters; });
+    setState(() {
+      _parameters = parameters;
+    });
   }
 
   @override
@@ -49,7 +51,7 @@ class _ParticlesState extends State<Particles> {
   }
 
   _simulateParticles(Duration time) {
-    for(int i = 0; i < particles.length && i < _parameters.count; ++i) {
+    for (int i = 0; i < particles.length && i < _parameters.count; ++i) {
       particles[i].maintainRestart(time);
     }
   }
@@ -71,20 +73,20 @@ class ParticleParameters {
   Color color;
   DrawableRoot svg;
 
-  ParticleParameters(this.count, {
-    this.scale = 15,
-    this.scaleRandomness = const Offset(1,1.5),
-    this.startPosition = const Offset(-.2,1.2),
-    this.startPositionRandomness = const Offset(1.4,1),
-    this.endPosition = const Offset(-.2,-.2),
-    this.endPositionRandomness = const Offset(1.4,-1),
-    this.directionRandomness = true,
-    this.xCurve = Curves.linear,
-    this.yCurve = Curves.linear,
-    this.durationMs = 40000,
-    this.durationRandomness = 10000,
-    this.color = Colors.black,
-    this.svg});
+  ParticleParameters(this.count,
+      {this.scale = 15,
+      this.scaleRandomness = const Offset(1, 1.5),
+      this.startPosition = const Offset(-.2, 1.2),
+      this.startPositionRandomness = const Offset(1.4, 1),
+      this.endPosition = const Offset(-.2, -.2),
+      this.endPositionRandomness = const Offset(1.4, -1),
+      this.directionRandomness = true,
+      this.xCurve = Curves.linear,
+      this.yCurve = Curves.linear,
+      this.durationMs = 40000,
+      this.durationRandomness = 10000,
+      this.color = Colors.black,
+      this.svg});
 }
 
 class ParticleModel {
@@ -100,16 +102,21 @@ class ParticleModel {
   }
 
   restart({Duration time = Duration.zero}) {
-
     bool flip = parameters.directionRandomness ? random.nextBool() : false;
-    double startX = parameters.startPosition.dx + parameters.startPositionRandomness.dx * random.nextDouble();
-    double startY = parameters.startPosition.dy + parameters.startPositionRandomness.dy * random.nextDouble();
-    double endX = parameters.endPosition.dx + parameters.endPositionRandomness.dx * random.nextDouble();
-    double endY = parameters.endPosition.dy + parameters.endPositionRandomness.dy * random.nextDouble();
+    double startX = parameters.startPosition.dx +
+        parameters.startPositionRandomness.dx * random.nextDouble();
+    double startY = parameters.startPosition.dy +
+        parameters.startPositionRandomness.dy * random.nextDouble();
+    double endX = parameters.endPosition.dx +
+        parameters.endPositionRandomness.dx * random.nextDouble();
+    double endY = parameters.endPosition.dy +
+        parameters.endPositionRandomness.dy * random.nextDouble();
     final startPosition = flip ? Offset(startX, startY) : Offset(endX, endY);
     final endPosition = flip ? Offset(endX, endY) : Offset(startX, startY);
 
-    Duration duration = Duration(milliseconds: parameters.durationMs + random.nextInt(parameters.durationRandomness));
+    Duration duration = Duration(
+        milliseconds: parameters.durationMs +
+            random.nextInt(parameters.durationRandomness));
 
     tween = MultiTrackTween([
       Track("x").add(
@@ -120,7 +127,9 @@ class ParticleModel {
           curve: parameters.yCurve),
     ]);
     animationProgress = AnimationProgress(duration: duration, startTime: time);
-    scale = parameters.scale * (parameters.scaleRandomness.dx + parameters.scaleRandomness.dy * random.nextDouble());
+    scale = parameters.scale *
+        (parameters.scaleRandomness.dx +
+            parameters.scaleRandomness.dy * random.nextDouble());
   }
 
   maintainRestart(Duration time) {
@@ -138,18 +147,19 @@ class ParticlePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if(parameters.svg != null) {
-      for(int i = 0; i < particles.length && i < parameters.count; ++i) {
+    if (parameters.svg != null) {
+      for (int i = 0; i < particles.length && i < parameters.count; ++i) {
         particles[i].maintainRestart(time);
         var progress = particles[i].animationProgress.progress(time);
         final animation = particles[i].tween.transform(progress);
-        final position = Offset(
-            animation["x"] * size.width, animation["y"] * size.height);
+        final position =
+            Offset(animation["x"] * size.width, animation["y"] * size.height);
         canvas.save();
         canvas.translate(position.dx, position.dy);
         canvas.scale(particles[i].scale);
         parameters.svg.draw(
-            canvas, ColorFilter.mode(parameters.color, BlendMode.src),
+            canvas,
+            ColorFilter.mode(parameters.color, BlendMode.src),
             Rect.fromLTWH(0, 0, size.width, size.height));
         canvas.restore();
       }

@@ -1,11 +1,27 @@
-# Digital Clock
+# Sky Globe Clock
 
-This app is an example of a digital clock.
-It has a light theme and a dark theme.
-See the [Analog Clock](../analog_clock) if you'd like an example that displays the weather and location.
+Digital (and analog) clock that displays weather conditions similar to a snow globe and  includes bird-oid (boid) flocking.
+Gradients on hour and minutes are angled to reflect current position on an analog clock.
 
-<img src='digital.gif' width='350'>
+light - sunny
+<img src='light-sun.gif' width='350'>
+dark - sunny
+<img src='dark-sun.gif' width='350'>
 
-<img src='digital_dark.png' width='350'>
+snow
+<img src='dark-snow.gif' width='350'>
 
-<img src='digital_light.png' width='350'>
+rain
+<img src='white-rain.gif' width='350'>
+
+wind
+<img src='dark-wind.gif' width='350'>
+
+cloudy
+<img src='light-cloud.gif' width='350'>
+
+storm
+<img src='dark-storm.gif' width='350'>
+
+foggy
+<img src='light-fog.gif' width='350'>

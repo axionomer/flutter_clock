@@ -1,5 +1,5 @@
 name: digital_clock
-description: Digital clock.
+description: Digital (and analog) clock that displays weather conditions similar to a snow globe - also includes an implemention of bird-oid (boid) flocking.
 version: 1.0.0+1
 
 environment:
